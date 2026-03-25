@@ -1,0 +1,242 @@
+.profile-page {
+    min-height: 100vh;
+    padding: 40px;
+    background-color: #FFFDD0;
+    /* Cream Fallback */
+    background-image: url('../assets/education_doodles_bg.png');
+    background-size: 500px;
+    /* Pattern size */
+    background-repeat: repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.profile-page::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 253, 208, 0.4);
+    /* Soft cream overlay to wash out the doodles */
+    pointer-events: none;
+    z-index: 0;
+}
+
+.profile-header,
+.profile-card {
+    position: relative;
+    z-index: 1;
+    /* Keep content above doodles */
+}
+
+.profile-header {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.profile-header h1 {
+    color: #006D5B;
+    margin: 0;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid #006D5B;
+    color: #006D5B;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background-color: #006D5B;
+    color: white;
+}
+
+.profile-card {
+    background: #FFFDD0;
+    /* Wheat Cream Background */
+    width: 100%;
+    max-width: 800px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    display: flex;
+    overflow: hidden;
+}
+
+.photo-section {
+    background-color: #006D5B;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: #FFFDD0;
+    /* Wheat Cream background for photo area */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+}
+
+.profile-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-placeholder {
+    width: 80%;
+    height: 80%;
+    color: #006D5B;
+}
+
+.upload-label {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #FFFDD0;
+    color: #006D5B;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+.upload-label:hover {
+    transform: scale(1.1);
+}
+
+.info-section {
+    flex: 1;
+    padding: 60px;
+}
+
+.info-group {
+    margin-bottom: 25px;
+}
+
+.info-group label {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.info-value {
+    font-size: 1.2rem;
+    color: #333;
+    font-weight: 500;
+    margin: 0;
+}
+
+.course-tag {
+    color: #006D5B !important;
+    font-weight: bold !important;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.edit-input:focus {
+    border-color: #006D5B;
+    outline: none;
+}
+
+.profile-actions {
+    margin-top: 40px;
+    display: flex;
+    gap: 15px;
+}
+
+.edit-btn,
+.save-btn {
+    background-color: #006D5B;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.edit-btn:hover,
+.save-btn:hover {
+    background-color: #004d40;
+}
+
+.cancel-btn {
+    background: none;
+    border: 1px solid #ccc;
+    color: #666;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .profile-card {
+        flex-direction: column;
+    }
+
+    .photo-section {
+        padding: 40px;
+    }
+
+    .info-section {
+        padding: 40px;
+    }
+}
+
+.teacher-id-badge {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

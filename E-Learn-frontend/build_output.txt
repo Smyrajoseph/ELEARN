@@ -1,0 +1,25 @@
+
+> e-learn@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  93.62 kB  build\static\js\main.86388980.js
+  5.85 kB   build\static\css\main.b4121721.css
+  1.76 kB   build\static\js\453.5e85142c.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

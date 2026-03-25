@@ -1,0 +1,10 @@
+﻿
+> e-learn@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Failed to compile.
+
+Module not found: Error: Can't resolve './pages/Home' in 'C:\Users\Smyra Johnson Joseph\Saved Games\OneDrive\Desktop\my project\E-Learn-frontend\src'
+
+

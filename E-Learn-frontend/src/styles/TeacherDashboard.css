@@ -1,0 +1,239 @@
+/* TeacherDashboard.css */
+
+.teacher-page-container {
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.teacher-page-container::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../assets/home_bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    filter: blur(5px);
+    z-index: -1;
+    opacity: 0.8;
+}
+
+/* Sidebar Styles */
+.teacher-sidebar {
+    background-color: #006D5B;
+    /* Teal Green */
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    white-space: nowrap;
+}
+
+.teacher-sidebar-header {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    margin-bottom: 40px;
+    height: 60px;
+}
+
+.teacher-sidebar-profile-text {
+    margin-left: 15px;
+    display: flex;
+    flex-direction: column;
+    color: #FFFDD0;
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+.teacher-sidebar-profile-text.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.teacher-sidebar-profile-text.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.welcome-text {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.name-text {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.nav-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 28px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: #FFFDD0;
+    margin-bottom: 5px;
+}
+
+.nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-left: 5px solid #FFFDD0;
+}
+
+.nav-text {
+    margin-left: 20px;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+.nav-text.hidden {
+    opacity: 0;
+}
+
+.nav-text.visible {
+    opacity: 1;
+}
+
+.logout-item {
+    display: flex;
+    align-items: center;
+    padding: 20px 28px;
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
+}
+
+.logout-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main Content Styles */
+.teacher-main-content {
+    flex: 1;
+    padding: 30px 40px;
+    overflow-y: auto;
+}
+
+.teacher-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid #006D5B;
+    padding-bottom: 15px;
+    width: fit-content;
+}
+
+.teacher-title {
+    color: #006D5B;
+    /* Teal Green */
+    font-weight: bold;
+    margin: 0;
+    font-size: 2rem;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.upload-card,
+.requests-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    height: fit-content;
+    border: 1px solid #e0e0e0;
+}
+
+.card-title {
+    color: #006D5B;
+    font-weight: bold;
+    font-size: 1.5rem;
+    border-left: 4px solid #006D5B;
+    padding-left: 10px;
+    margin-bottom: 20px;
+}
+
+.form-label {
+    color: #006D5B;
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+.upload-btn {
+    margin-top: 25px;
+    width: 100%;
+    padding: 12px;
+    background-color: #006D5B;
+    /* Teal Green */
+    color: #FFFDD0;
+    border: none;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.upload-btn:hover {
+    transform: scale(1.02);
+}
+
+.approve-btn {
+    background: #10b981;
+    color: white;
+    margin-right: 10px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.reject-btn {
+    background: #ef4444;
+    color: white;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.request-item {
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
