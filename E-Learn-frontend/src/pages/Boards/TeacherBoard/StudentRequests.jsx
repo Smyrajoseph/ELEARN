@@ -20,19 +20,19 @@ const StudentRequests = ({ requests, onApprove, onReject }) => {
                         </thead>
                         <tbody>
                             {requests.map(request => (
-                                <tr key={request.id} style={{ borderBottom: '1px solid #ddd' }}>
-                                    <td style={{ padding: '12px' }}>{request.name}</td>
-                                    <td style={{ padding: '12px' }}>{request.email}</td>
-                                    <td style={{ padding: '12px' }}>{request.course}</td>
+                                <tr key={request._id} style={{ borderBottom: '1px solid #ddd' }}>
+                                    <td style={{ padding: '12px' }}>{request.userInfo?.name || 'Unknown'}</td>
+                                    <td style={{ padding: '12px' }}>{request.userInfo?.email || 'Unknown'}</td>
+                                    <td style={{ padding: '12px' }}>{request.course_id || 'Unknown'}</td>
                                     <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
                                         <button
-                                            onClick={() => onApprove(request.id)}
+                                            onClick={() => onApprove(request._id)}
                                             style={{ background: '#006D5B', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                                         >
                                             <FaCheck /> Approve
                                         </button>
                                         <button
-                                            onClick={() => onReject(request.id)}
+                                            onClick={() => onReject(request._id)}
                                             style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                                         >
                                             <FaTimes /> Reject

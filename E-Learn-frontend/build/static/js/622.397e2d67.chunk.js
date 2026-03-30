@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunke_learn=self.webpackChunke_learn||[]).push([[622],{622(t,e,a){a.r(e),a.d(e,{default:()=>n});var c=a(162);const n={getNote:async t=>{try{return(await c.A.get("/notes/".concat(t))).data}catch(e){throw e}},saveNote:async(t,e)=>{try{return(await c.A.post("/notes",{subjectId:t,content:e})).data}catch(a){throw a}}}}}]);
+//# sourceMappingURL=622.397e2d67.chunk.js.map

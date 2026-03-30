@@ -1,90 +1,249 @@
-/* Auth.css */
+/* Auth.css - Clean Dashboard-Aligned Redesign */
+
+:root {
+    --auth-primary: #10b981;
+    /* Emerald Green */
+    --auth-primary-hover: #059669;
+    --auth-secondary: #111827;
+    /* Dark grayish blue */
+    --auth-bg: #f3f4f6;
+    /* Dashboard Light Gray */
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb;
+    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    --text-error: #ef4444;
+}
 
 .auth-container {
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #FFFDD0;
-    /* Cream background */
-    background-image: url('../../assets/unnamed.jpg');
+    background-image: 
+        linear-gradient(rgba(17, 24, 39, 0.75), rgba(17, 24, 39, 0.75)),
+        url('../../assets/lms-bg.png');
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
+    background-attachment: fixed;
+    padding: 20px;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glassmorphism Auth Box */
+.auth-box {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 460px;
+    padding: 50px 40px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: auth-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Subtle background decoration to match dashboard feel */
+.auth-container::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    right: -5%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
+    border-radius: 50%;
 }
 
 .auth-box {
+    position: relative;
+    z-index: 2;
     width: 100%;
-    max-width: 400px;
+    max-width: 480px;
     padding: 40px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    animation: auth-slide-up 0.4s ease-out;
+}
+
+@keyframes auth-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .auth-title {
-    color: #006D5B;
-    /* Teal Green */
-    font-weight: bold;
+    font-size: 1.8rem;
+    color: var(--auth-secondary);
+    font-weight: 800;
     text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
 }
 
 .auth-subtitle {
     text-align: center;
     margin-bottom: 30px;
-    color: #006D5B;
-    font-weight: bold;
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
 .form-group {
-    margin-bottom: 15px;
-}
-
-.form-group-last {
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .auth-label {
-    color: #006D5B;
-    /* Teal Green */
-    font-weight: bold;
     display: block;
-    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
 }
 
 .auth-input {
     width: 100%;
-    padding: 8px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
     box-sizing: border-box;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: var(--auth-primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.auth-input.input-error {
+    border-color: var(--text-error);
+    background: #fef2f2;
+}
+
+.auth-input.input-error:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+/* Error message styling */
+.error-text {
+    color: var(--text-error);
+    font-size: 0.75rem;
+    margin-top: 5px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Custom select styling */
+select.auth-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.1rem;
+    padding-right: 2.5rem;
 }
 
 .auth-button {
     width: 100%;
-    padding: 12px;
-    background-color: #006D5B;
-    /* Matching button to theme */
-    border: none;
+    padding: 13px;
+    margin-top: 10px;
+    background-color: var(--auth-primary);
     color: white;
-    font-weight: bold;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-button:hover {
+    background-color: var(--auth-primary-hover);
+}
+
+.auth-button:active {
+    transform: scale(0.98);
+}
+
+.auth-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #9ca3af;
 }
 
 .auth-footer {
-    margin-top: 20px;
+    margin-top: 25px;
     text-align: center;
     font-size: 0.9rem;
+    border-top: 1px solid var(--card-border);
+    padding-top: 20px;
 }
 
 .auth-text {
-    color: #006D5B;
-    /* Teal Green */
-    font-weight: bold;
+    color: var(--text-muted);
 }
 
 .auth-link {
-    color: #006D5B;
-    cursor: pointer;
+    color: var(--auth-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.auth-link:hover {
+    color: var(--auth-primary-hover);
     text-decoration: underline;
+}
+
+/* Custom Scrollbar for Course List */
+.checkbox-group {
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 12px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.checkbox-group::-webkit-scrollbar {
+    width: 6px;
+}
+
+.checkbox-group::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.checkbox-group::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+.checkbox-group::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
 }

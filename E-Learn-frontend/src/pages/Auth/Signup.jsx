@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { FaExclamationCircle } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
 const Signup = () => {
     const navigate = useNavigate();
+    const { register } = useAuth();
+    
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('student');
+    const [loading, setLoading] = useState(false);
+    const [emailError, setEmailError] = useState('');
 
-    // Dynamic course list
     const [courseList] = useState(() => {
         const defaults = [
             "B.Sc Information Technology",
@@ -27,17 +32,40 @@ const Signup = () => {
     });
 
     const [course, setCourse] = useState(localStorage.getItem('selectedCourse') || (courseList[0] || ''));
+    const [teacherCourses, setTeacherCourses] = useState(() => {
+        const saved = localStorage.getItem('selectedTeacherCourses');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const handleCourseCheckbox = (e, c) => {
+        if (e.target.checked) {
+            setTeacherCourses(prev => [...prev, c]);
+        } else {
+            setTeacherCourses(prev => prev.filter(item => item !== c));
+        }
+    };
 
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(String(email).toLowerCase());
     };
 
-    const handleSignup = (e) => {
+    const handleEmailChange = (e) => {
+        const value = e.target.value;
+        setEmail(value);
+        if (value && !validateEmail(value)) {
+            setEmailError('Please enter a valid email address');
+        } else {
+            setEmailError('');
+        }
+    };
+
+    const handleSignup = async (e) => {
         e.preventDefault();
 
         if (!validateEmail(email)) {
-            toast.error("Please enter a valid email address.");
+            setEmailError('Please enter a valid email address');
+            toast.error("Invalid email format.");
             return;
         }
 
@@ -46,57 +74,53 @@ const Signup = () => {
             return;
         }
 
-        // Create pending request for teacher approval if role is student
-        if (role === 'student') {
-            const profileData = {
-                name: name,
-                email: email,
-                phone: "9876543210",
-                photo: null,
-                course: course,
-                isApproved: false // Initial status
-            };
-            localStorage.setItem('studentProfile', JSON.stringify(profileData));
-            localStorage.setItem('selectedCourse', course);
+        setLoading(true);
 
-            // Add to Teacher's pending requests list
-            const pendingRequests = JSON.parse(localStorage.getItem('pendingStudentRequests') || '[]');
-            const newRequest = {
-                id: Date.now(),
-                name: name,
-                email: email,
-                course: course,
-                status: 'pending',
-                timestamp: new Date().toISOString()
+        try {
+            const userData = {
+                name,
+                email,
+                password,
+                role
             };
 
-            // Check if already exists by email to prevent duplicates in mock
-            if (!pendingRequests.find(r => r.email === email)) {
-                localStorage.setItem('pendingStudentRequests', JSON.stringify([...pendingRequests, newRequest]));
+            if (role === 'teacher') {
+                if (teacherCourses.length === 0) {
+                    toast.error("Please select at least one course.");
+                    setLoading(false);
+                    return;
+                }
+                userData.course = teacherCourses;
+                localStorage.setItem('selectedTeacherCourses', JSON.stringify(teacherCourses));
+            } else {
+                userData.course = course;
+                localStorage.setItem('selectedCourse', course);
             }
-        } else if (role === 'teacher') {
-            const teacherProfile = {
-                name: name,
-                email: email,
-                id: "TCH-" + Math.floor(1000 + Math.random() * 9000),
-                photo: null,
-                expertise: "General Teacher"
-            };
-            localStorage.setItem('teacherProfile', JSON.stringify(teacherProfile));
-        }
 
-        // Simulate signup logic
-        toast.success(role === 'student' ? "Signup successful! Waiting for teacher approval." : `Account created for ${role}! Please login.`);
-        navigate('/login');
+            await register(userData);
+            
+            const message = role === 'student' 
+                ? "Account created! You will need teacher approval to access courses. Please login to proceed." 
+                : "Account created! Please login to start teaching.";
+            
+            toast.success(message);
+            navigate('/login', { state: { role } });
+        } catch (error) {
+            console.error('Signup error:', error);
+            const errorMessage = error?.message || 'Signup failed. Please try again.';
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="auth-container">
-            <div className="card auth-box">
-                <h1 className="mb-20 auth-title">Create Account</h1>
+            <div className="auth-box">
+                <h1 className="auth-title">CREATE ACCOUNT</h1>
+                <p className="auth-subtitle">Join E-LEARN to start your learning journey.</p>
 
                 <form onSubmit={handleSignup}>
-                    {/* Role Selection */}
                     <div className="form-group">
                         <label className="auth-label">I am a...</label>
                         <select
@@ -109,14 +133,13 @@ const Signup = () => {
                         </select>
                     </div>
 
-                    {/* Course Selection (Only for Students) */}
-                    {role === 'student' && (
-                        <div className="form-group animate-fade-in">
+                    {role === 'student' ? (
+                        <div className="form-group slide-in">
                             <label className="auth-label">Select Your Course</label>
                             <select
                                 value={course}
                                 onChange={(e) => setCourse(e.target.value)}
-                                className="auth-input animated-focus"
+                                className="auth-input"
                                 required
                             >
                                 {courseList.map((c, index) => (
@@ -124,14 +147,44 @@ const Signup = () => {
                                 ))}
                             </select>
                         </div>
+                    ) : (
+                        <div className="form-group slide-in">
+                            <label className="auth-label">Select Your Courses</label>
+                            <div className="checkbox-group">
+                                {courseList.map((c, index) => (
+                                    <label key={index} style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        marginBottom: '10px', 
+                                        cursor: 'pointer',
+                                        color: '#374151',
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        <input
+                                            type="checkbox"
+                                            value={c}
+                                            checked={teacherCourses.includes(c)}
+                                            onChange={(e) => handleCourseCheckbox(e, c)}
+                                            style={{ 
+                                                cursor: 'pointer', 
+                                                marginRight: '12px',
+                                                width: '18px',
+                                                height: '18px',
+                                                accentColor: '#10b981'
+                                            }}
+                                        />
+                                        <span>{c}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     )}
 
-                    {/* Name Input */}
                     <div className="form-group">
-                        <label className="auth-label">Name</label>
+                        <label className="auth-label">Full Name</label>
                         <input
                             type="text"
-                            placeholder="Enter your full name"
+                            placeholder="Enter your name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
@@ -139,25 +192,28 @@ const Signup = () => {
                         />
                     </div>
 
-                    {/* Email Input */}
                     <div className="form-group">
                         <label className="auth-label">Email Address</label>
                         <input
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder="e.g. yourname@gmail.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={handleEmailChange}
                             required
-                            className="auth-input"
+                            className={`auth-input ${emailError ? 'input-error' : ''}`}
                         />
+                        {emailError && (
+                            <span className="error-text">
+                                <FaExclamationCircle /> {emailError}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Password Input */}
-                    <div className="form-group-last">
+                    <div className="form-group">
                         <label className="auth-label">Password</label>
                         <input
                             type="password"
-                            placeholder="Create a password"
+                            placeholder="Create a password (min. 6 characters)"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -165,14 +221,19 @@ const Signup = () => {
                         />
                     </div>
 
-                    {/* Signup Button */}
-                    <button type="submit" className="btn btn-primary auth-button">
-                        Sign Up
+                    <button 
+                        type="submit" 
+                        className="auth-button"
+                        disabled={loading || !!emailError}
+                    >
+                        {loading ? 'Creating Account...' : 'Sign Up'}
                     </button>
                 </form>
 
                 <div className="auth-footer">
-                    <p className="auth-text">Already have an account? <Link to="/login" className="auth-link">Login here</Link></p>
+                    <p className="auth-text">
+                        Already have an account? <Link to="/login" className="auth-link">Login here</Link>
+                    </p>
                 </div>
             </div>
         </div>
@@ -180,3 +241,4 @@ const Signup = () => {
 };
 
 export default Signup;
+

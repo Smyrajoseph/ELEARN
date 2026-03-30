@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/static/css/main.a87fa506.css",
+    "main.js": "/static/js/main.043066e3.js",
+    "static/js/622.397e2d67.chunk.js": "/static/js/622.397e2d67.chunk.js",
+    "static/js/453.5e85142c.chunk.js": "/static/js/453.5e85142c.chunk.js",
+    "static/media/doodle_bg.png": "/static/media/doodle_bg.1b846320c0454dde6011.png",
+    "static/media/home_bg.png": "/static/media/home_bg.3437d88b1090e1fa7539.png",
+    "static/media/banking.png": "/static/media/banking.881f6ee9a82b26014f01.png",
+    "static/media/it.png": "/static/media/it.66125a98f6319164c653.png",
+    "static/media/finance.png": "/static/media/finance.5e750877d3a931e6ed80.png",
+    "static/media/bammc.png": "/static/media/bammc.62fdc8064e8b66f8254f.png",
+    "static/media/sleeping_panda.png": "/static/media/sleeping_panda.7cab8800a418e5753d4d.png",
+    "static/media/commerce.png": "/static/media/commerce.8f438c297ab41962cf87.png",
+    "static/media/marketing.png": "/static/media/marketing.245d81ce2f61e461b706.png",
+    "index.html": "/index.html",
+    "main.a87fa506.css.map": "/static/css/main.a87fa506.css.map",
+    "main.043066e3.js.map": "/static/js/main.043066e3.js.map",
+    "622.397e2d67.chunk.js.map": "/static/js/622.397e2d67.chunk.js.map",
+    "453.5e85142c.chunk.js.map": "/static/js/453.5e85142c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a87fa506.css",
+    "static/js/main.043066e3.js"
+  ]
+}

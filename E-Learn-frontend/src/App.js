@@ -16,7 +16,9 @@ import Quiz from './pages/Quiz';
 import StudentProfile from './pages/Auth/StudentProfile';
 import TeacherProfile from './pages/Auth/TeacherProfile';
 import LoadingScreen from './components/LoadingScreen';
+import ProtectedRoute from './components/ProtectedRoute';
 import { ProgressProvider } from './context/ProgressContext';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   const [loading, setLoading] = React.useState(true);
@@ -36,22 +38,67 @@ function App() {
 
   return (
     <>
-      <ProgressProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Home />} />
+      <AuthProvider>
+        <ProgressProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Home />} />
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/student" element={<StudentDashboard />} />
-            <Route path="/teacher" element={<TeacherDashboard />} />
-            <Route path="/video/:id" element={<Videoplayer />} />
-            <Route path="/quiz/:id" element={<Quiz />} />
-            <Route path="/student/profile" element={<StudentProfile />} />
-            <Route path="/teacher/profile" element={<TeacherProfile />} />
-          </Routes>
-        </Router>
-      </ProgressProvider>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              
+              <Route 
+                path="/student" 
+                element={
+                  <ProtectedRoute allowedRoles={['student']}>
+                    <StudentDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/teacher" 
+                element={
+                  <ProtectedRoute allowedRoles={['teacher']}>
+                    <TeacherDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/video/:id" 
+                element={
+                  <ProtectedRoute>
+                    <Videoplayer />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/quiz/:id" 
+                element={
+                  <ProtectedRoute>
+                    <Quiz />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/student/profile" 
+                element={
+                  <ProtectedRoute allowedRoles={['student']}>
+                    <StudentProfile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/teacher/profile" 
+                element={
+                  <ProtectedRoute allowedRoles={['teacher']}>
+                    <TeacherProfile />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </Router>
+        </ProgressProvider>
+      </AuthProvider>
       <ToastContainer position="bottom-right" />
     </>
   );
