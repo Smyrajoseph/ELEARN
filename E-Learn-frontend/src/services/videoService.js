@@ -11,12 +11,13 @@ const videoService = {
     }
   },
 
-  // Upload video for a course
+  // Upload content (video or document) for a course
   uploadVideo: async (courseId, videoData) => {
     try {
       const formData = new FormData();
       formData.append('title', videoData.title);
       formData.append('description', videoData.description);
+      formData.append('type', videoData.type || 'video');
       if (videoData.subject_id) {
         formData.append('subject_id', videoData.subject_id);
       }
@@ -24,7 +25,7 @@ const videoService = {
         formData.append('year_id', videoData.year_id);
       }
       if (videoData.file) {
-        formData.append('video', videoData.file);
+        formData.append('video', videoData.file); // Backend expects 'video' field
       }
       if (videoData.url) {
         formData.append('url', videoData.url);

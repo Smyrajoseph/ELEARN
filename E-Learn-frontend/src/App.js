@@ -99,7 +99,7 @@ function App() {
           </Router>
         </ProgressProvider>
       </AuthProvider>
-      <ToastContainer position="bottom-right" />
+      <ToastContainer position="top-center" />
     </>
   );
 }

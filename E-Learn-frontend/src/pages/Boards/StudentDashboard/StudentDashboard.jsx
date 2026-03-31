@@ -12,6 +12,8 @@ import Spinner from '../../../components/Spinner';
 import EnrollmentRequest from '../../Auth/EnrollmentRequest';
 import '../../../styles/StudentDashboardModern.css';
 import '../../../App.css';
+import '../../Auth/Auth.css';
+
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -47,6 +49,7 @@ const StudentDashboard = () => {
   };
 
   const [showEnrollmentRequest, setShowEnrollmentRequest] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'subjects', 'statistics'
   const [viewingSubject, setViewingSubject] = useState(null); // Full subject object for detail view
   const [subjectNote, setSubjectNote] = useState('');
@@ -56,6 +59,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
   const [courseSubjects, setCourseSubjects] = useState([]);
   const [subjectQuizzes, setSubjectQuizzes] = useState({});
@@ -86,30 +90,34 @@ const StudentDashboard = () => {
           hasEnrollment: !!firstEnrollment
         });
 
-        // Fetch videos for the enrolled course
-        if (courseId) {
-          try {
-            const videoData = await videoService.getCourseVideos(courseId);
+            // Fetch all content (videos and documents)
+            const allContentData = await videoService.getCourseVideos(courseId);
 
-            // Videos
-            const yearSpecificVideos = (videoData || []).filter(v => 
+            // Filter by academic year
+            const yearSpecificContent = (allContentData || []).filter(v => 
               isYearMatch(v.year_id || v.year, studentYear)
             );
-            setVideos(yearSpecificVideos);
+
+            // Separate videos and documents
+            const videoFiles = yearSpecificContent.filter(v => v.type === 'video' || !v.type);
+            const docFiles = yearSpecificContent.filter(v => v.type === 'document' || v.type === 'pdf');
+
+            setVideos(videoFiles);
+            setDocuments(docFiles);
 
             // Fetch curriculum and notify about diagnostics
-            console.log('🎬 VIDEO SYNC DEBUG:', {
+            console.log('🎬 CONTENT SYNC DEBUG:', {
               studentYear,
-              totalFetched: videoData.length,
-              filteredForStudent: yearSpecificVideos.length,
-              allVideoYears: [...new Set(videoData.map(v => v.year_id || v.year))]
+              totalFetched: allContentData.length,
+              videos: videoFiles.length,
+              documents: docFiles.length
             });
 
             // Add Diagnostic Toast
-            if (videoData.length === 0) {
+            if (allContentData.length === 0) {
               toast.info(`Sync Info: ${courseId} | Year: ${studentYear} | Raw: 0`);
-            } else if (yearSpecificVideos.length === 0) {
-              toast.info(`Sync Info: ${videoData.length} modules found, but none match '${studentYear}'`);
+            } else if (yearSpecificContent.length === 0) {
+              toast.info(`Sync Info: ${allContentData.length} items found, but none match '${studentYear}'`);
             }
 
             // FETCH ALL SUBJECTS FOR THE CURRICULUM AND QUIZZES
@@ -119,13 +127,6 @@ const StudentDashboard = () => {
               const yearCurriculum = (allCurriculumSubjects || []).filter(s => 
                 isYearMatch(s.year_id || s.year, studentYear)
               );
-              
-              console.log('📚 SUBJECT SYNC DEBUG:', {
-                studentYear,
-                totalFetched: allCurriculumSubjects.length,
-                filteredForStudent: yearCurriculum.length,
-                allSubjectYears: [...new Set(allCurriculumSubjects.map(s => s.year_id || s.year))]
-              });
               
               setCourseSubjects(yearCurriculum);
 
@@ -145,15 +146,9 @@ const StudentDashboard = () => {
             } catch (err) {
               console.error('Curriculum/Quiz fetch error:', err);
             }
-          } catch (error) {
-            console.log('No videos found for course, using empty array');
-            setVideos([]);
-          }
         }
-      }
     } catch (error) {
       console.error('Error fetching student data:', error);
-      // Fallback to localStorage for backward compatibility
       const savedCourse = localStorage.getItem('selectedCourse') || "B.Sc Information Technology";
       setCurrentCourse({ title: savedCourse });
       toast.warning('Using offline mode. Some features may be limited.');
@@ -175,6 +170,7 @@ const StudentDashboard = () => {
       } catch (err) {
         console.error('Note save error:', err);
         setIsSavingNote(false);
+        toast.error('Failed to auto-save note. Please check your connection.');
       }
     };
 
@@ -218,8 +214,20 @@ const StudentDashboard = () => {
 
   const handleLogout = async () => {
     await logout();
+    toast.info('Logged out successfully');
     navigate('/login');
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileDropdown && !event.target.closest('.header-profile')) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileDropdown]);
 
   // Check if user has pending enrollments
   const hasPendingEnrollment = enrollments.some(e => e.status === 'pending');
@@ -247,8 +255,8 @@ const StudentDashboard = () => {
   if (!isApproved) {
     if (hasPendingEnrollment) {
       return (
-        <div className="dashboard-container" style={{ justifyContent: 'center', alignItems: 'center', background: '#FFFDD0' }}>
-          <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px', background: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+        <div className="auth-container">
+          <div className="card auth-box" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
             <div style={{ background: '#fef3c7', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
               <FaLock size={40} color="#d97706" />
             </div>
@@ -269,8 +277,8 @@ const StudentDashboard = () => {
 
     if (hasRejectedEnrollment) {
       return (
-        <div className="dashboard-container" style={{ justifyContent: 'center', alignItems: 'center', background: '#FFFDD0' }}>
-          <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px', background: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+        <div className="auth-container">
+          <div className="card auth-box" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
             <div style={{ background: '#fee2e2', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
               <FaTimes size={40} color="#dc2626" />
             </div>
@@ -293,11 +301,10 @@ const StudentDashboard = () => {
     }
   }
 
-  // If no enrollments at all, show enrollment request form
   if (enrollments.length === 0) {
     return (
-      <div className="dashboard-container" style={{ justifyContent: 'center', alignItems: 'center', background: '#FFFDD0' }}>
-        <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px', background: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+      <div className="auth-container">
+        <div className="card auth-box" style={{ maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
           <h1 style={{ color: '#006D5B', marginBottom: '15px' }}>Welcome, {user?.name}!</h1>
           <p style={{ color: '#666', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '25px' }}>
             You haven't enrolled in any courses yet.
@@ -329,10 +336,15 @@ const StudentDashboard = () => {
       </div>
       <div className="header-links">
         <span className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>My Videos</span>
+        <span className={activeTab === 'documents' ? 'active' : ''} onClick={() => setActiveTab('documents')}>Lessons</span>
         <span className={activeTab === 'subjects' ? 'active' : ''} onClick={() => setActiveTab('subjects')}>Subjects</span>
         <span className={activeTab === 'statistics' ? 'active' : ''} onClick={() => setActiveTab('statistics')}>Statistics</span>
       </div>
-      <div className="header-profile" onClick={() => navigate('/student/profile')} style={{ cursor: 'pointer' }}>
+      <div 
+        className="header-profile" 
+        onClick={() => setShowProfileDropdown(!showProfileDropdown)} 
+        style={{ cursor: 'pointer', position: 'relative' }}
+      >
         {user?.photo ? (
           <img src={user.photo} alt="Profile" className="sidebar-profile-img" style={{ width: '26px', height: '26px', borderRadius: '50%' }} />
         ) : (
@@ -340,6 +352,39 @@ const StudentDashboard = () => {
         )}
         <span>{user?.name || 'Student'}</span>
         <FaSignOutAlt size={22} className="logout-icon" onClick={(e) => { e.stopPropagation(); handleLogout(); }} title="Logout" />
+
+        {showProfileDropdown && (
+          <div className="profile-dropdown-card slide-in" onClick={(e) => e.stopPropagation()}>
+            <div className="dropdown-header">
+              <div className="dropdown-avatar">
+                {user?.photo ? (
+                  <img src={user.photo} alt="User" />
+                ) : (
+                  <FaUserCircle size={50} color="#10b981" />
+                )}
+              </div>
+              <div className="dropdown-user-info">
+                <h4>{user?.name || 'Student'}</h4>
+                <p>{user?.email || 'No email provided'}</p>
+              </div>
+            </div>
+            <div className="dropdown-divider"></div>
+            <div className="dropdown-course-info">
+              <span className="dropdown-label">Enrolled Course:</span>
+              <div className="dropdown-course-name">
+                {currentCourse?.title || currentCourse?.name || 'Loading course...'}
+              </div>
+            </div>
+            <div className="dropdown-actions">
+              <button className="wf-btn-outline" onClick={() => navigate('/student/profile')}>
+                <FaUserCircle style={{ marginRight: '8px' }} /> View Full Profile
+              </button>
+              <button className="wf-btn-outline logout-btn" onClick={handleLogout}>
+                <FaSignOutAlt style={{ marginRight: '8px' }} /> Log Out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -351,6 +396,9 @@ const StudentDashboard = () => {
       <ul>
         <li className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
           <FaPlay /> My Videos
+        </li>
+        <li className={activeTab === 'documents' ? 'active' : ''} onClick={() => setActiveTab('documents')}>
+          <FaBookOpen /> My Lessons
         </li>
         <li className={activeTab === 'subjects' ? 'active' : ''} onClick={() => setActiveTab('subjects')}>
           <FaClipboardList /> Subjects
@@ -604,38 +652,153 @@ const StudentDashboard = () => {
                   </div>
                 </div>
 
-                {/* Right Column: My Notes Pad */}
-                <div className="card" style={{ padding: '20px', background: '#fdfdfd', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ margin: 0, color: '#006D5B' }}>My Study Pad</h3>
-                    {isSavingNote && <span style={{ fontSize: '0.75rem', color: '#666' }}>Saving changes...</span>}
+                {/* Right Column: Study Materials & Notes Pad */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Study Materials (Teacher Documents) */}
+                  <div className="wf-card" style={{ padding: '20px', background: '#F0F9FF', borderColor: '#BAE6FD' }}>
+                    <h3 style={{ marginBottom: '15px', color: '#0369A1', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <FaBookOpen /> Lesson Materials
+                    </h3>
+                    <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                      {(() => {
+                        const subDocs = documents.filter(d => {
+                          const dSubName = (d.subject?.name || d.subject_name || d.subject || '').toString().toLowerCase().trim();
+                          const dSubId = (d.subject?._id || d.subject_id || '').toString();
+                          const currentSubName = (viewingSubject.name || '').toLowerCase().trim();
+                          const currentSubId = (viewingSubject._id || viewingSubject.id || '').toString();
+                          return dSubName === currentSubName || (dSubId && dSubId === currentSubId);
+                        });
+
+                        return subDocs.length > 0 ? (
+                          subDocs.map((doc) => (
+                            <div key={doc._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'white', borderRadius: '8px', marginBottom: '8px', border: '1px solid #E0F2FE' }}>
+                              <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                                {doc.title}
+                              </span>
+                              <button 
+                                className="wf-btn" 
+                                style={{ padding: '4px 10px', fontSize: '0.75rem', background: '#0284C7' }}
+                                onClick={() => {
+                                  const url = doc.video_url || doc.url || '';
+                                  const isActuallyDoc = doc.type === 'document' || doc.type === 'pdf' || 
+                                                        url.toLowerCase().endsWith('.pdf') || 
+                                                        url.toLowerCase().endsWith('.doc') || 
+                                                        url.toLowerCase().endsWith('.docx') || 
+                                                        url.toLowerCase().endsWith('.txt');
+                                  
+                                  const fullUrl = url.startsWith('http') ? url : `http://localhost:5000${url}`;
+                                  
+                                  if (isActuallyDoc) {
+                                    window.open(fullUrl, '_blank');
+                                  } else {
+                                    // Normally this is in content view, but if someone clicked 'view' on a video
+                                    navigate(`/video/${doc._id}`);
+                                  }
+                                }}
+                              >
+                                View
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <p style={{ fontSize: '0.85rem', color: '#64748B', fontStyle: 'italic' }}>No documents for this subject.</p>
+                        );
+                      })()}
+                    </div>
                   </div>
-                  <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '15px' }}>
-                    Record your thoughts and key points here. They auto-save as you type!
-                  </p>
-                  <textarea
-                    style={{
-                      flex: 1,
-                      width: '100%',
-                      minHeight: '400px',
-                      padding: '15px',
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                      background: '#fff',
-                      fontSize: '0.95rem',
-                      lineHeight: '1.6',
-                      resize: 'none',
-                      outline: 'none',
-                      fontFamily: 'Inter, sans-serif'
-                    }}
-                    placeholder="Start taking notes for this subject..."
-                    value={subjectNote}
-                    onChange={(e) => setSubjectNote(e.target.value)}
-                  />
-                  <div style={{ marginTop: '15px', fontSize: '0.8rem', color: '#999', textAlign: 'right' }}>
-                    Last synced to database just now
+
+                  {/* My Notes Pad */}
+                  <div className="card" style={{ padding: '20px', background: '#fdfdfd', borderRadius: '12px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <h3 style={{ margin: 0, color: '#006D5B' }}>My Study Pad</h3>
+                      {isSavingNote && <span style={{ fontSize: '0.75rem', color: '#666' }}>Saving...</span>}
+                    </div>
+                    <textarea
+                      style={{
+                        flex: 1,
+                        width: '100%',
+                        minHeight: '300px',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        background: '#fff',
+                        fontSize: '0.95rem',
+                        lineHeight: '1.6',
+                        resize: 'none',
+                        outline: 'none',
+                        fontFamily: 'Inter, sans-serif'
+                      }}
+                      placeholder="Start taking notes..."
+                      value={subjectNote}
+                      onChange={(e) => setSubjectNote(e.target.value)}
+                    />
                   </div>
                 </div>
+              </div>
+            </div>
+          ) : activeTab === 'documents' ? (
+            <div className="wireframe-section slide-in">
+              <div className="course-header-banner">
+                <span className="wf-tag">Learning Materials</span>
+                <h2>Study Lessons</h2>
+                <p className="wf-subtitle">Access lesson materials, notes, and study guides shared by your instructor.</p>
+              </div>
+
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+                gap: '20px',
+                marginTop: '30px'
+              }}>
+                {documents.map((doc) => (
+                  <div key={doc._id} className="wf-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <div style={{ width: '50px', height: '50px', background: '#F0F9FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284C7' }}>
+                        <FaBookOpen size={24} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem', color: '#1E293B' }}>{doc.title}</h4>
+                        <span className="wf-tag" style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.7rem', marginTop: '5px', display: 'inline-block' }}>
+                          {doc.subject?.name || 'Lesson Material'}
+                        </span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: '#64748B', margin: 0, minHeight: '40px' }}>
+                      {doc.description || 'View this lesson resource for your study.'}
+                    </p>
+                    <button 
+                      className="wf-btn" 
+                      style={{ width: '100%', background: '#0284C7' }}
+                      onClick={() => {
+                        const url = doc.video_url || doc.url || '';
+                        const isActuallyDoc = doc.type === 'document' || doc.type === 'pdf' || 
+                                              url.toLowerCase().endsWith('.pdf') || 
+                                              url.toLowerCase().endsWith('.doc') || 
+                                              url.toLowerCase().endsWith('.docx') || 
+                                              url.toLowerCase().endsWith('.txt');
+
+                        const fullUrl = url.startsWith('http') ? url : `http://localhost:5000${url}`;
+                        
+                        if (isActuallyDoc) {
+                          window.open(fullUrl, '_blank');
+                        } else {
+                          navigate(`/video/${doc._id}`);
+                        }
+                      }}
+                    >
+                      Open Lesson
+                    </button>
+                  </div>
+                ))}
+                {documents.length === 0 && (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px' }}>
+                    <div style={{ background: '#f3f4f6', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+                      <FaBookOpen size={40} color="#9ca3af" />
+                    </div>
+                    <h3 style={{ color: '#111827', marginBottom: '10px' }}>No lessons yet</h3>
+                    <p className="wf-subtitle">Your teacher hasn't uploaded any lesson materials for this academic year yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : activeTab === 'subjects' ? (

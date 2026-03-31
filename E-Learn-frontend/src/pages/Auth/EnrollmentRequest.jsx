@@ -20,11 +20,18 @@ const EnrollmentRequest = ({ onRequestSent, onCancel }) => {
         console.log('📚 Fetching available courses...');
         const coursesData = await courseService.getAllCourses();
         console.log('✅ Courses fetched:', coursesData);
-        setCourses(coursesData || []);
         
-        // Pre-select first course
-        if (coursesData && coursesData.length > 0) {
-          setSelectedCourse(coursesData[0]._id);
+        // Filter out unwanted courses
+        const filteredCourses = (coursesData || []).filter(course => 
+          course.title !== 'Placeholder Course' && 
+          course.title !== 'BSc IT'
+        );
+        
+        setCourses(filteredCourses);
+        
+        // Pre-select first course from filtered list
+        if (filteredCourses.length > 0) {
+          setSelectedCourse(filteredCourses[0]._id);
         }
       } catch (error) {
         console.error('❌ Error fetching courses:', error);
@@ -102,7 +109,7 @@ const EnrollmentRequest = ({ onRequestSent, onCancel }) => {
   };
 
   return (
-    <div className="dashboard-container" style={{ justifyContent: 'center', alignItems: 'center', background: '#FFFDD0', minHeight: '100vh' }}>
+    <div className="auth-container">
       <div className="card auth-box" style={{ maxWidth: '500px', padding: '40px' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '25px' }}>
           <FaBook size={32} color="#006D5B" style={{ marginRight: '15px' }} />

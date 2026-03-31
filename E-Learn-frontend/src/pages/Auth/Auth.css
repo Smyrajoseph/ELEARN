@@ -21,16 +21,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-image: 
-        linear-gradient(rgba(17, 24, 39, 0.75), rgba(17, 24, 39, 0.75)),
-        url('../../assets/lms-bg.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
     padding: 20px;
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     position: relative;
     overflow: hidden;
+    z-index: 0;
+}
+
+.auth-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)),
+        url('../../assets/unnamed.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    filter: blur(3px);
+    transform: scale(1.05);
+    z-index: -1;
 }
 
 /* Glassmorphism Auth Box */
@@ -49,7 +62,7 @@
 }
 
 /* Subtle background decoration to match dashboard feel */
-.auth-container::before {
+.auth-container::after {
     content: '';
     position: absolute;
     top: -10%;

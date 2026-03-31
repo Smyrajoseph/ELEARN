@@ -18,6 +18,14 @@ const TeacherDashboard = () => {
   const { user, logout } = useAuth();
 
   const [loading, setLoading] = useState(true);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ 
+    isOpen: false, 
+    title: '', 
+    message: '', 
+    onConfirm: null,
+    loading: false
+  });
   const [courses, setCourses] = useState([]);
 
   // Wireframe UI States
@@ -39,7 +47,7 @@ const TeacherDashboard = () => {
   const [quizSelectedYear, setQuizSelectedYear] = useState('');
   const [quizSelectedSubject, setQuizSelectedSubject] = useState(null);
   const [quizVideos, setQuizVideos] = useState([]);
-  const [selectedVideoAfter, setSelectedVideoAfter] = useState('');
+  // const [selectedVideoAfter, setSelectedVideoAfter] = useState('');
   const [quizMode, setQuizMode] = useState('link'); // 'link' or 'builder'
   const [builderQuestions, setBuilderQuestions] = useState([
     { question: '', options: ['', '', '', ''], correctAnswer: '' }
@@ -47,6 +55,29 @@ const TeacherDashboard = () => {
 
   // Fixed Structural Constants
   const ACADEMIC_YEARS = ['First Year (FY)', 'Second Year (SY)', 'Third Year (TY)'];
+
+  // Helper: Match years robustly (handling aliases like "Year 1" vs "First Year (FY)")
+  const isYearMatch = (dataYear, targetYear) => {
+    if (!dataYear || !targetYear) return false;
+    const dY = String(dataYear).toLowerCase().trim();
+    const tY = String(targetYear).toLowerCase().trim();
+    
+    if (dY === tY) return true;
+
+    const isFirst = (tY.includes('1') || tY.includes('first') || tY.includes('fy'));
+    const dataIsFirst = (dY.includes('1') || dY.includes('first') || dY.includes('fy'));
+    if (isFirst && dataIsFirst) return true;
+
+    const isSecond = (tY.includes('2') || tY.includes('second') || tY.includes('sy'));
+    const dataIsSecond = (dY.includes('2') || dY.includes('second') || dY.includes('sy'));
+    if (isSecond && dataIsSecond) return true;
+
+    const isThird = (tY.includes('3') || tY.includes('third') || tY.includes('ty'));
+    const dataIsThird = (dY.includes('3') || dY.includes('third') || dY.includes('ty'));
+    if (isThird && dataIsThird) return true;
+
+    return false;
+  };
 
   useEffect(() => {
     if (['subject-add', 'course-detail', 'upload-content'].includes(activeTab) && selectedCourse) {
@@ -171,19 +202,51 @@ const TeacherDashboard = () => {
 
   const handleLogout = async () => {
     await logout();
+    toast.info('Logged out successfully');
     navigate('/login');
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileDropdown && !event.target.closest('.header-profile')) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileDropdown]);
+
+  // Helper for custom confirmation
+  const showConfirm = (title, message, onConfirm) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+          await onConfirm();
+          setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, loading: false });
+        } catch (err) {
+          console.error(err);
+          setConfirmModal(prev => ({ ...prev, loading: false }));
+        }
+      },
+      loading: false
+    });
+  };
+
   const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm('Are you sure you want to permanently delete this course?')) return;
-    try {
-      await courseService.deleteCourse(courseId);
-      setCourses(courses.filter(c => c._id !== courseId));
-      toast.success('Course deleted successfully');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete course');
-    }
+    showConfirm(
+      'Delete Course',
+      'Are you sure you want to permanently delete this course? This action cannot be undone.',
+      async () => {
+        await courseService.deleteCourse(courseId);
+        setCourses(courses.filter(c => c._id !== courseId));
+        toast.success('Course deleted successfully');
+      }
+    );
   };
 
   const handleEnrollmentStatusUpdate = async (requestId, status) => {
@@ -211,7 +274,11 @@ const TeacherDashboard = () => {
         <span className={activeTab === 'upload-content' ? 'active' : ''} onClick={() => { setActiveTab('upload-content'); setSelectedCourse(null); }}>Upload Content</span>
         <span className={activeTab === 'my-courses' ? 'active' : ''} onClick={() => setActiveTab('my-courses')}>Manage</span>
       </div>
-      <div className="header-profile" onClick={() => navigate('/teacher/profile')} style={{ cursor: 'pointer' }}>
+      <div 
+        className="header-profile" 
+        onClick={() => setShowProfileDropdown(!showProfileDropdown)} 
+        style={{ cursor: 'pointer', position: 'relative' }}
+      >
         {user?.photo ? (
           <img src={user.photo} alt="Profile" className="sidebar-profile-img" style={{ width: '26px', height: '26px', borderRadius: '50%' }} />
         ) : (
@@ -219,6 +286,46 @@ const TeacherDashboard = () => {
         )}
         <span>{user?.name || 'Teacher'}</span>
         <FaSignOutAlt size={22} className="logout-icon" onClick={(e) => { e.stopPropagation(); handleLogout(); }} title="Logout" />
+
+        {showProfileDropdown && (
+          <div className="profile-dropdown-card slide-in" onClick={(e) => e.stopPropagation()}>
+            <div className="dropdown-header">
+              <div className="dropdown-avatar">
+                {user?.photo ? (
+                  <img src={user.photo} alt="User" />
+                ) : (
+                  <FaUserCircle size={50} color="#10b981" />
+                )}
+              </div>
+              <div className="dropdown-user-info">
+                <h4>{user?.name || 'Teacher'}</h4>
+                <p>{user?.email || 'No email provided'}</p>
+              </div>
+            </div>
+            <div className="dropdown-divider"></div>
+            <div className="dropdown-course-info">
+              <span className="dropdown-label">Managed Courses:</span>
+              <div className="dropdown-course-list">
+                {courses.length > 0 ? (
+                  courses.slice(0, 3).map(c => (
+                    <div key={c._id} className="dropdown-course-item">• {c.title}</div>
+                  ))
+                ) : (
+                  <div className="dropdown-course-item">No courses yet.</div>
+                )}
+                {courses.length > 3 && <div className="dropdown-course-item" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>+ {courses.length - 3} more</div>}
+              </div>
+            </div>
+            <div className="dropdown-actions">
+              <button className="wf-btn-outline" onClick={() => navigate('/teacher/profile')}>
+                <FaUserCircle style={{ marginRight: '8px' }} /> View Full Profile
+              </button>
+              <button className="wf-btn-outline logout-btn" onClick={handleLogout}>
+                <FaSignOutAlt style={{ marginRight: '8px' }} /> Log Out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -246,6 +353,9 @@ const TeacherDashboard = () => {
         </li>
         <li className={activeTab === 'my-videos' ? 'active' : ''} onClick={() => setActiveTab('my-videos')}>
           <FaUpload /> My Videos
+        </li>
+        <li className={activeTab === 'my-documents' ? 'active' : ''} onClick={() => setActiveTab('my-documents')}>
+          <FaBookOpen /> My Lessons
         </li>
         <li className={activeTab === 'upload-content' ? 'active' : ''} onClick={() => { setActiveTab('upload-content'); setSelectedCourse(null); setSelectedSubject(null); }}>
           <FaUpload /> Upload Content
@@ -400,15 +510,15 @@ const TeacherDashboard = () => {
     };
 
     const handleDeleteSubject = async (subjectId) => {
-      if (!window.confirm('Are you sure you want to delete this subject?')) return;
-      try {
-        await subjectService.deleteSubject(subjectId);
-        setCourseSubjects(courseSubjects.filter(s => s._id !== subjectId));
-        toast.success('Subject deleted.');
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to delete subject.');
-      }
+      showConfirm(
+        'Delete Subject',
+        'Are you sure you want to delete this subject?',
+        async () => {
+          await subjectService.deleteSubject(subjectId);
+          setCourseSubjects(courseSubjects.filter(s => s._id !== subjectId));
+          toast.success('Subject deleted.');
+        }
+      );
     };
 
     const handleUpdateSubject = async (subjectId, oldName) => {
@@ -810,14 +920,22 @@ const TeacherDashboard = () => {
 
       try {
         setUploadLoading(true);
-        if (type === 'video') {
-          await videoService.uploadVideo(courseId, { title, description, file, subject_id: subjectId, year_id: yearId });
-          toast.success('Video uploaded and stored in GridFS successfully!');
+        if (type === 'video' || type === 'pdf') {
+          const contentType = type === 'video' ? 'video' : 'document';
+          await videoService.uploadVideo(courseId, { 
+            title, 
+            description, 
+            file, 
+            subject_id: subjectId, 
+            year_id: yearId,
+            type: contentType 
+          });
+          toast.success(`${type === 'video' ? 'Video' : 'Lesson'} uploaded successfully!`);
         } else {
-          toast.info(`${type} uploads are coming soon! Standardizing and storing in GridFS...`);
-          // Mock behavior for now
+          toast.info(`${type} uploads are coming soon!`);
         }
         e.target.reset();
+        // Refresh local content
         const data = await videoService.getTeacherVideos();
         setTeacherVideos(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -838,13 +956,22 @@ const TeacherDashboard = () => {
             <label>Content Type</label>
             <select name="contentType" required defaultValue={selectedUploadType} onChange={(e) => setSelectedUploadType(e.target.value)}>
               <option value="video">Video Lecture</option>
-              <option value="pdf">Syllabus</option>
+              <option value="pdf">Lesson Material</option>
             </select>
           </div>
 
           <div className="form-group">
             <label>Select Course</label>
-            <select name="courseId" required defaultValue={selectedCourse?._id || ''}>
+            <select 
+              name="courseId" 
+              required 
+              defaultValue={selectedCourse?._id || ''}
+              onChange={(e) => {
+                const courseId = e.target.value;
+                const courseObj = courses.find(c => (c._id || c.id) === courseId);
+                setSelectedCourse(courseObj);
+              }}
+            >
               <option value="" disabled>-- Choose Course --</option>
               {courses.map(c => <option key={c._id} value={c._id}>{c.title}</option>)}
             </select>
@@ -863,10 +990,20 @@ const TeacherDashboard = () => {
               <label>Select Subject</label>
               <select name="subjectId" required defaultValue={selectedSubject?._id || ''}>
                 <option value="" disabled>-- Choose Subject --</option>
-                {courseSubjects.filter(s => s.year_id === (selectedUploadYear || selectedSubject?.year_id)).map(sub => (
-                  <option key={sub._id} value={sub._id}>{sub.name}</option>
-                ))}
+                {courseSubjects.filter(s => isYearMatch(s.year_id || s.year, selectedUploadYear || selectedSubject?.year_id)).length > 0 ? (
+                  courseSubjects.filter(s => isYearMatch(s.year_id || s.year, selectedUploadYear || selectedSubject?.year_id)).map(sub => (
+                    <option key={sub._id} value={sub._id}>{sub.name}</option>
+                  ))
+                ) : (
+                  <option value="" disabled>No subjects found for this year</option>
+                )}
               </select>
+              {courseSubjects.length > 0 && courseSubjects.filter(s => isYearMatch(s.year_id || s.year, selectedUploadYear || selectedSubject?.year_id)).length === 0 && (
+                <p className="wf-small-text" style={{ color: '#ef4444', marginTop: '5px' }}>
+                  No subjects created for this academic year. 
+                  <span style={{ textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px' }} onClick={() => setActiveTab('manage-subjects')}>Go to Subjects</span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -906,72 +1043,94 @@ const TeacherDashboard = () => {
     );
   };
 
-  // MY VIDEOS PAGE
-  const renderTeacherVideos = () => (
-    <div className="wireframe-section slide-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>My Uploaded Videos</h2>
-        <button className="wf-btn" onClick={() => setActiveTab('upload-content')}>+ Upload New</button>
-      </div>
-      <div className="course-grid">
-        {(teacherVideos || []).map(video => {
-          const videoSource = video.video_url.startsWith('http')
-            ? video.video_url
-            : `http://localhost:5000${video.video_url}`;
+  // MY VIDEOS / DOCUMENTS PAGE
+  const renderTeacherVideos = (typeFilter = 'video') => {
+    const isDoc = typeFilter === 'document';
+    const contentList = (teacherVideos || []).filter(v => {
+      if (isDoc) return v.type === 'document' || v.type === 'pdf';
+      return v.type === 'video' || !v.type;
+    });
 
-          return (
-            <div key={video._id} className="wf-course-card">
-              <div className="wf-course-icon" style={{ backgroundColor: '#000' }}>
-                <video
-                  src={videoSource}
-                  className="wf-video-preview"
-                  muted
-                  preload="metadata"
-                  onMouseEnter={(e) => {
-                    const playPromise = e.target.play();
-                    if (playPromise !== undefined) {
-                      playPromise.catch(() => {
-                        // Safe to ignore: play was interrupted or failed
-                      });
+    return (
+      <div className="wireframe-section slide-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2>{isDoc ? 'My Uploaded Lessons' : 'My Uploaded Videos'}</h2>
+          <button className="wf-btn" onClick={() => setActiveTab('upload-content')}>+ Upload New</button>
+        </div>
+        <div className="course-grid">
+          {contentList.map(item => {
+            const fileSource = item.video_url.startsWith('http')
+              ? item.video_url
+              : `http://localhost:5000${item.video_url}`;
+
+            return (
+              <div key={item._id} className="wf-course-card">
+                <div className="wf-course-icon" style={{ backgroundColor: isDoc ? '#f3f4f6' : '#000' }}>
+                  {isDoc ? (
+                    <FaBook size={60} color="#10b981" />
+                  ) : (
+                    <video
+                      src={fileSource}
+                      className="wf-video-preview"
+                      muted
+                      preload="metadata"
+                      onMouseEnter={(e) => {
+                        const playPromise = e.target.play();
+                        if (playPromise !== undefined) {
+                          playPromise.catch(() => {});
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.pause();
+                        e.target.currentTime = 0;
+                      }}
+                    />
+                  )}
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.description || 'No description provided.'}</p>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                  <button className="wf-btn" style={{ flex: 1 }} onClick={() => {
+                    const url = item.video_url || '';
+                    const isActuallyDoc = item.type === 'document' || item.type === 'pdf' || 
+                                          url.toLowerCase().endsWith('.pdf') || 
+                                          url.toLowerCase().endsWith('.doc') || 
+                                          url.toLowerCase().endsWith('.docx') || 
+                                          url.toLowerCase().endsWith('.txt');
+                    if (isActuallyDoc) {
+                      window.open(fileSource, '_blank');
+                    } else {
+                      setPreviewVideo(item);
                     }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.pause();
-                    e.target.currentTime = 0;
-                  }}
-                />
+                  }}>
+                    {isDoc || (item.type === 'document' || item.type === 'pdf') ? 'Open Lesson' : 'Play Video'}
+                  </button>
+                  <button className="wf-btn-outline" style={{ flex: 1 }} onClick={() => setEditingVideo(item)}>
+                    Edit
+                  </button>
+                  <button className="wf-btn-outline" style={{ width: '80px', borderColor: '#ef4444', color: '#ef4444' }} onClick={async (e) => {
+                    e.stopPropagation();
+                    showConfirm(
+                      `Delete ${isDoc ? 'Lesson' : 'Video'}`,
+                      `Are you sure you want to delete this ${isDoc ? 'lesson' : 'video'}?`,
+                      async () => {
+                        await videoService.deleteVideo(item._id);
+                        setTeacherVideos(teacherVideos.filter(v => v._id !== item._id));
+                        toast.success(`${isDoc ? 'Lesson' : 'Video'} deleted!`);
+                      }
+                    );
+                  }}>
+                    Delete
+                  </button>
+                </div>
               </div>
-              <h3>{video.title}</h3>
-              <p>{video.description || 'No description provided.'}</p>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                <button className="wf-btn" style={{ flex: 1 }} onClick={() => setPreviewVideo(video)}>
-                  Play Video
-                </button>
-                <button className="wf-btn-outline" style={{ flex: 1 }} onClick={() => setEditingVideo(video)}>
-                  Edit
-                </button>
-                <button className="wf-btn-outline" style={{ width: '80px', borderColor: '#ef4444', color: '#ef4444' }} onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!window.confirm('Delete this video?')) return;
-                  try {
-                    await videoService.deleteVideo(video._id);
-                    setTeacherVideos(teacherVideos.filter(v => v._id !== video._id));
-                    toast.success('Video deleted!');
-                  } catch (err) {
-                    console.error(err);
-                    toast.error('Failed to delete video.');
-                  }
-                }}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          );
-        })}
-        {teacherVideos.length === 0 && <p>You haven't uploaded any videos yet.</p>}
+            );
+          })}
+          {contentList.length === 0 && <p>You haven't uploaded any {isDoc ? 'lessons' : 'videos'} yet.</p>}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // RENDER SWITCH
   const renderContent = () => {
@@ -981,7 +1140,8 @@ const TeacherDashboard = () => {
       case 'add-course': return renderAddCourse();
       case 'course-detail': return renderCourseDetail();
       case 'upload-content': return renderUploadContent();
-      case 'my-videos': return renderTeacherVideos();
+      case 'my-videos': return renderTeacherVideos('video');
+      case 'my-documents': return renderTeacherVideos('document');
       case 'enrollment-requests': return renderEnrollmentRequests();
       case 'quiz-creator': return renderQuizCreator();
 
@@ -996,6 +1156,22 @@ const TeacherDashboard = () => {
 
   const renderVideoPlayerModal = () => {
     if (!previewVideo) return null;
+    
+    const url = previewVideo.video_url || '';
+    const isActuallyDoc = previewVideo.type === 'document' || previewVideo.type === 'pdf' || 
+                          url.toLowerCase().endsWith('.pdf') || 
+                          url.toLowerCase().endsWith('.doc') || 
+                          url.toLowerCase().endsWith('.docx') || 
+                          url.toLowerCase().endsWith('.txt');
+    if (isActuallyDoc) {
+      // Safety reset: if a document somehow triggered the modal, clear it and open properly
+      setPreviewVideo(null);
+      const videoSource = previewVideo.video_url.startsWith('http')
+        ? previewVideo.video_url
+        : `http://localhost:5000${previewVideo.video_url}`;
+      window.open(videoSource, '_blank');
+      return null;
+    }
 
     // Construct full URL if it is a relative path like /files/...
     const videoSource = previewVideo.video_url.startsWith('http')
@@ -1111,9 +1287,13 @@ const TeacherDashboard = () => {
                 <label>Select Subject</label>
                 <select name="subjectId" required defaultValue={editingVideo.subject_id || ''}>
                   <option value="" disabled>-- Choose Subject --</option>
-                  {courseSubjects.filter(s => s.year_id === (selectedUploadYear || editingVideo.year_id)).map(sub => (
-                    <option key={sub._id} value={sub._id}>{sub.name}</option>
-                  ))}
+                  {courseSubjects.filter(s => isYearMatch(s.year_id || s.year, selectedUploadYear || editingVideo.year_id)).length > 0 ? (
+                    courseSubjects.filter(s => isYearMatch(s.year_id || s.year, selectedUploadYear || editingVideo.year_id)).map(sub => (
+                      <option key={sub._id} value={sub._id}>{sub.name}</option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No subjects found for this year</option>
+                  )}
                 </select>
               </div>
             </div>
@@ -1142,9 +1322,41 @@ const TeacherDashboard = () => {
     );
   };
 
+  const renderConfirmModal = () => {
+    if (!confirmModal.isOpen) return null;
+
+    return (
+      <div className="wf-modal-overlay" style={{ zIndex: 1100 }}>
+        <div className="wf-modal-content center-form slide-in" style={{ maxWidth: '400px', textAlign: 'center', padding: '30px' }}>
+          <h2 style={{ color: '#111827', marginBottom: '15px' }}>{confirmModal.title}</h2>
+          <p style={{ color: '#6b7280', marginBottom: '25px', lineHeight: '1.5' }}>{confirmModal.message}</p>
+          <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+            <button 
+              className="wf-btn-large" 
+              style={{ margin: 0, background: '#ef4444', flex: 1 }} 
+              onClick={confirmModal.onConfirm}
+              disabled={confirmModal.loading}
+            >
+              {confirmModal.loading ? 'Deleting...' : 'Delete'}
+            </button>
+            <button 
+              className="wf-btn-outline" 
+              style={{ flex: 1, fontSize: '1.1rem', padding: '14px 25px', borderRadius: '8px', height: 'auto' }} 
+              onClick={() => setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null, loading: false })}
+              disabled={confirmModal.loading}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="wireframe-layout">
       {renderHeader()}
+      {renderConfirmModal()}
       {renderVideoPlayerModal()}
       {renderEditVideoModal()}
       <div className="wireframe-body">
