@@ -36,11 +36,10 @@ app.use(express.json());
 
 // CORS configuration for production
 const corsOptions = {
-  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', 'http://localhost:3001'],
+  origin: ["http://localhost:3000", "https://mylms-theta.vercel.app", process.env.FRONTEND_URL].filter(Boolean),
   credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
@@ -48,6 +47,11 @@ app.use(cors(corsOptions));
 // Health check endpoint (before DB dependency)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Root welcome route
+app.get('/', (req, res) => {
+  res.send('<h1>✅ E-Learn Backend is Running Successfully</h1><p>Visit the frontend at the Vercel URL.</p>');
 });
 
 //Auth
