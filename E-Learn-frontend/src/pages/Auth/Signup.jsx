@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaExclamationCircle } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { validateEmail } from '../../utils/validation';
 import './Auth.css';
 
 const Signup = () => {
@@ -45,10 +46,6 @@ const Signup = () => {
         }
     };
 
-    const validateEmail = (email) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(String(email).toLowerCase());
-    };
 
     const handleEmailChange = (e) => {
         const value = e.target.value;
@@ -97,13 +94,9 @@ const Signup = () => {
                 localStorage.setItem('selectedCourse', course);
             }
 
-            await register(userData);
+            const response = await register(userData);
             
-            const message = role === 'student' 
-                ? "Account created! You will need teacher approval to access courses. Please login to proceed." 
-                : "Account created! Please login to start teaching.";
-            
-            toast.success(message);
+            toast.success(response.message || "Account created! Please verify your email.");
             navigate('/login', { state: { role } });
         } catch (error) {
             console.error('Signup error:', error);

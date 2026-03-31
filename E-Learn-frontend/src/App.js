@@ -15,6 +15,7 @@ import Videoplayer from './pages/Videoplayer';
 import Quiz from './pages/Quiz';
 import StudentProfile from './pages/Auth/StudentProfile';
 import TeacherProfile from './pages/Auth/TeacherProfile';
+import VerifyEmail from './pages/Auth/VerifyEmail';
 import LoadingScreen from './components/LoadingScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProgressProvider } from './context/ProgressContext';
@@ -46,6 +47,7 @@ function App() {
 
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               
               <Route 
                 path="/student" 

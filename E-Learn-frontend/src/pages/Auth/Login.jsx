@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaExclamationCircle } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { validateEmail } from '../../utils/validation';
 import '../../App.css';
 import './Auth.css';
 
@@ -17,10 +18,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
 
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
-  };
 
   const handleEmailChange = (e) => {
     const value = e.target.value;
